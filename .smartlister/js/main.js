@@ -1349,6 +1349,93 @@ $(document).ready(function () {
     }
 
 
+
+
+    //  detect file drag
+    $(function() {
+        var pressed,
+            objPressed;
+
+        $(document)
+        .on('mousedown', '.directory .item:not(.new, .uploading, .renaming)', function(e) {
+            pressed = true;
+            objPressed = $(this);
+        })
+        .on('mousemove', 'body', function(e) {
+            if (!pressed) return;
+            var posX = e.clientX;
+            var posY = e.clientY;
+            itemDragStart(objPressed, posX, posY);
+        })
+        .on('mouseup', function() {
+            pressed = false;
+            itemDragEnd();
+        });
+    });
+
+
+    //  initialise file drag
+    function itemDragStart(item, posX, posY) {
+
+        //  show file move box
+        $('.drag-to-move').addClass('active').css({
+          'left': posX + 'px',
+          'top': posY + 'px'
+        });
+
+
+        //  return if an item is already being dragged
+        if ($('.directory .item.dragging').length > 0) {
+            return false;
+        }
+
+        //  lower opacity of active item
+        $(item).addClass('dragging');
+
+
+        //  remove old info
+        $('.drag-to-move').empty();
+
+        //  set item name + image
+        var name = $(item).find('.name').html();
+        var icon = {
+          'type': 'svg',
+          'html': $(item).find('svg').html()
+        }
+        if (icon['html'] == undefined || icon['html'] == null) {
+            icon['type'] = 'img';
+            icon['html'] = $(item).find('.img').attr('style');
+        }
+
+        //  add file info to move box
+        //  add name
+        $('.drag-to-move').html('<h2 class="name">'+ name +'</h2>');
+
+        //  add icon
+        if (icon['type'] == 'svg') {
+            $('.drag-to-move .name').before('<svg viewBox="0 0 24 24">'+ icon['html'] +'</svg>');
+        } else {
+            $('.drag-to-move .name').before("<div class=\"img\" style='"+ icon['html'] +"'></div>");
+        }
+
+    }
+
+
+    //  reset drag
+    function itemDragEnd() {
+
+        //  reset active dragging item
+        $('.directory .item').removeClass('dragging');
+
+        //  hide file move box
+        $('.drag-to-move').removeClass('active').css({'left': '100%', 'top': '0'});
+
+    }
+
+
+
+
+
     //  disable fab from settings
     if (!settings['fileUpload'] && !settings['folderCreation']) {
         $('.fab').css({ 'display': 'none' });
