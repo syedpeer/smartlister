@@ -7,7 +7,7 @@ require 'settings.php';
 
 
 //  deny malformed requests
-if (!isset($_POST['directory']) || !isset($_POST['newName']) || !$settings['renameItems']) {
+if (!isset($_POST['directory']) || !isset($_POST['name']) || !$settings['moveItems']) {
     header('HTTP/1.0 403 Forbidden');
     die;
 }
@@ -20,18 +20,19 @@ $response = [
 
 //  get post vars
 $directory = getDirectory('actual');
+$newDirectoryName = $_POST['newDirectory'];
 $type = $_POST['type'];
-$oldName = $_POST['oldName'];
-$newName = $_POST['newName'];
+$name = $_POST['name'];
 $filePath = realpath('../../' . $directory . '/') . DIRECTORY_SEPARATOR;
+$newFilePath = realpath('../../' . $directory . '/' . $newDirectoryName) . DIRECTORY_SEPARATOR;
 
 
 //  catch any errors
 try {
     //  check if file exists
-    if ((file_exists($filePath.$oldName) && $type == 'file') || (is_dir($filePath.$oldName) && $type = 'folder')) {
-        if (!rename($filePath.$oldName, $filePath.$newName)) {
-            throw new Exception('Unable to rename item');
+    if ((file_exists($filePath.$name) && $type == 'file') || (is_dir($filePath.$name) && $type = 'folder')) {
+        if (!rename($filePath.$name, $newFilePath.$name)) {
+            throw new Exception('Unable to move item');
         }
     } else {
         throw new Exception('Item does not exist');

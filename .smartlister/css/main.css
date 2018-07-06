@@ -634,10 +634,6 @@ body {
   background-color: rgba(128,216,255, .5);
 }
 
-.files-container .dragging {
-  opacity: .77;
-}
-
 
 .files-container .item svg,
 .files-container .item .img {
@@ -771,11 +767,20 @@ input:focus {
   font-family: 'Product Sans', 'Roboto', arial, sans-serif;
   width: 120px;
   color: #444;
-  font-size: 1.1em;
+  font-size: 1em;
   margin-left: .77em;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+
+.files-container .item.drag-active {
+  border: 2px solid #555;
+}
+
+.files-container .dragging {
+  opacity: .5;
 }
 
 

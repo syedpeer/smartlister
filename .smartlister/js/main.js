@@ -1356,6 +1356,7 @@ $(document).ready(function () {
         var pressed,
             objPressed;
 
+        //  detect mouse down + move + up / item hover
         $(document)
         .on('mousedown', '.directory .item:not(.new, .uploading, .renaming)', function(e) {
             pressed = true;
@@ -1368,9 +1369,24 @@ $(document).ready(function () {
             itemDragStart(objPressed, posX, posY);
         })
         .on('mouseup', function() {
-            pressed = false;
+            moveItem(objPressed);
             itemDragEnd();
-        });
+            pressed = false;
+            objPressed = 0;
+        })
+        .on({
+            mouseenter: function () {
+                if (objPressed == $(this) || !pressed) return false;
+
+                //  add visual indication of a folder being hovered
+                $(this).addClass('drag-active');
+            },
+            mouseleave: function () {
+                //  reset visual indication of a folder being hovered
+                $(this).removeClass('drag-active');
+            }
+        }, '.directory .folders .item:not(.new, .uploading, .renaming)');
+
     });
 
 
@@ -1425,10 +1441,87 @@ $(document).ready(function () {
     function itemDragEnd() {
 
         //  reset active dragging item
-        $('.directory .item').removeClass('dragging');
+        $('.directory .item').removeClass('dragging drag-active');
 
         //  hide file move box
         $('.drag-to-move').removeClass('active').css({'left': '100%', 'top': '0'});
+
+    }
+
+
+    //  move items
+    function moveItem(item) {
+
+        //  get item vars
+        var name = $(item).find('.name').html(),
+            type = 'file',
+            dir = directory,
+            newDirectory = $('.directory .folders .item.drag-active').find('.name').html();
+
+        //  check for folder instead of file
+        if ($(item).parent().hasClass('folders')) {
+            type = 'folder';
+        }
+
+        //  check if a new directory has been set
+        if (newDirectory == undefined || newDirectory == null) return false;
+
+
+        $.ajax({
+            url: settings['listerFolderName'] + '/php/move.php',
+            type: 'POST',
+            data: {
+                type: type,
+                name: name,
+                directory: dir,
+                newDirectory: newDirectory
+            },
+            cache: false
+        }).done(function (data) {
+            try {
+                data = JSON.parse(data);
+                console.log(data);
+                if (data['status'] == 'ok') {
+
+                  //  update to content
+                  if (type == 'folder') {
+                      for (var item in content[md5(dir)]['folders']) {
+                          if (content[md5(dir)]['folders'][item]['name'] == name) {
+                              content[md5(dir)]['folders'].splice(item, 1);
+                          }
+                      }
+                  } else {
+                      for (var item in content[md5(dir)]['files']) {
+                          if (content[md5(dir)]['files'][item]['name'] == name) {
+                              content[md5(dir)]['files'].splice(item, 1);
+                          }
+                      }
+                  }
+
+                  //  re-sort items
+                  addDirectory(directory);
+
+                  //  report a success to the user
+                  if (type == 'folder') {
+                      toast('Folder moved', 'tick', 2800);
+                      console.log('[Folder] Folder moved: ' + name);
+                  } else {
+                      toast('File moved', 'tick', 2800);
+                      console.log('[File] File moved: ' + name);
+                  }
+
+              } else {
+                  throw 'Server error';
+              }
+          } catch (err) {
+              toast('Item not moved', 'cross', 4000);
+              console.error('[Item] Unable to move item (' + err + ')');
+          }
+      }).fail(function () {
+          toast('Item not moved', 'cross', 4000);
+          console.error('[Item] Unable to request for an item move (most likely due to loss of internet)');
+      });
+
 
     }
 
