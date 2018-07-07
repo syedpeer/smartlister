@@ -470,7 +470,13 @@ body {
 
 .breadcrums .item {
   cursor: pointer;
+  border-radius: 5px;
   padding-right: .5em;
+  -webkit-transition: all 280ms ease;
+     -moz-transition: all 280ms ease;
+      -ms-transition: all 280ms ease;
+       -o-transition: all 280ms ease;
+          transition: all 280ms ease;
 }
 
 .breadcrums .item:first-child {
@@ -777,6 +783,9 @@ input:focus {
 
 .files-container .item.drag-active {
   border: 2px solid #555;
+}
+.breadcrums .item.drag-active {
+  border: 2px solid #444;
 }
 
 .files-container .dragging {

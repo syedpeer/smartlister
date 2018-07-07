@@ -1385,7 +1385,7 @@ $(document).ready(function () {
                 //  reset visual indication of a folder being hovered
                 $(this).removeClass('drag-active');
             }
-        }, '.directory .folders .item:not(.new, .uploading, .renaming)');
+        }, '.directory .folders .item:not(.new, .uploading, .renaming), .breadcrums .item');
 
     });
 
@@ -1441,7 +1441,7 @@ $(document).ready(function () {
     function itemDragEnd() {
 
         //  reset active dragging item
-        $('.directory .item').removeClass('dragging drag-active');
+        $('.directory .item, .bredcrums .item').removeClass('dragging drag-active');
 
         //  hide file move box
         $('.drag-to-move').removeClass('active').css({'left': '100%', 'top': '0'});
@@ -1456,15 +1456,32 @@ $(document).ready(function () {
         var name = $(item).find('.name').html(),
             type = 'file',
             dir = directory,
-            newDirectoryName = $('.directory .folders .item.drag-active').find('.name').html();
+            newDirectoryName = $('.directory .folders .item.drag-active').find('.name').html(),
+            newDirectoryBreadcrums = $('.breadcrums .item.drag-active').attr('dir');
 
         //  check for folder instead of file
         if ($(item).parent().hasClass('folders')) {
             type = 'folder';
         }
 
-        //  check if a new directory has been set
-        if (newDirectoryName == undefined || newDirectoryName == null) return false;
+        //  make current directorys breadcrums (for comparison)
+        var currentBreadcrums = dir.split('/');
+
+        //  check for a folder drag (not breadcrum)
+        if (newDirectoryName !== undefined && newDirectoryName !== null) {
+            //  make new breadcrums
+            var newPath = dir + '/' + newDirectoryName,
+                newBreadcrums = newPath.split('/');
+        } else if (newDirectoryBreadcrums !== undefined && newDirectoryBreadcrums !== null) {
+            //  decode and parse breadcrum directory
+            var newBreadcrums = JSON.parse(Base64.decode(newDirectoryBreadcrums));
+        } else {
+            return false;
+        }
+
+        //  prevent false file moves
+        if (JSON.stringify(currentBreadcrums) == JSON.stringify(newBreadcrums) ||
+            newBreadcrums[newBreadcrums.length-1] == newDirectoryName) return false;
 
 
         $.ajax({
@@ -1474,6 +1491,7 @@ $(document).ready(function () {
                 type: type,
                 name: name,
                 directory: dir,
+                newBreadcrums: JSON.stringify(newBreadcrums),
                 newDirectoryName: newDirectoryName
             },
             cache: false
@@ -1485,8 +1503,6 @@ $(document).ready(function () {
                     var newDirectory = dir + '/' + newDirectoryName,
                         ucType = type.charAt(0).toUpperCase() + type.slice(1),
                         plType = type + 's';
-
-                    console.log(newDirectory);
 
                     //  update to content
                     for (var item in content[md5(dir)][plType]) {
