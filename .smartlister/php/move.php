@@ -20,11 +20,21 @@ $response = [
 
 //  get post vars
 $directory = getDirectory('actual');
-$newDirectoryName = $_POST['newDirectoryName'];
+$directoryBreadcrums = json_decode($_POST['newBreadcrums']);
 $type = $_POST['type'];
 $name = $_POST['name'];
 $filePath = realpath('../../' . $directory . '/') . DIRECTORY_SEPARATOR;
-$newFilePath = realpath('../../' . $directory . '/' . $newDirectoryName) . DIRECTORY_SEPARATOR;
+
+//  loop breadcrums creating the new directory
+//  remove root from string
+$newDirectory = '';
+foreach ($directoryBreadcrums as $folder) {
+    $newDirectory .= $folder . '/';
+}
+$newDirectory = substr($newDirectory, 5);
+
+//  get full new directory
+$newFilePath = realpath('../../' . $newDirectory) . DIRECTORY_SEPARATOR;
 
 
 //  catch any errors

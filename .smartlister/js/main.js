@@ -1481,7 +1481,7 @@ $(document).ready(function () {
 
         //  prevent false file moves
         if (JSON.stringify(currentBreadcrums) == JSON.stringify(newBreadcrums) ||
-            newBreadcrums[newBreadcrums.length-1] == newDirectoryName) return false;
+            newBreadcrums[newBreadcrums.length-1] == name) return false;
 
 
         $.ajax({
@@ -1491,11 +1491,11 @@ $(document).ready(function () {
                 type: type,
                 name: name,
                 directory: dir,
-                newBreadcrums: JSON.stringify(newBreadcrums),
-                newDirectoryName: newDirectoryName
+                newBreadcrums: JSON.stringify(newBreadcrums)
             },
             cache: false
         }).done(function (data) {
+            console.log(data);
             try {
                 data = JSON.parse(data);
                 if (data['status'] == 'ok') {
