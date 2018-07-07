@@ -20,7 +20,7 @@ $response = [
 
 //  get post vars
 $directory = getDirectory('actual');
-$newDirectoryName = $_POST['newDirectory'];
+$newDirectoryName = $_POST['newDirectoryName'];
 $type = $_POST['type'];
 $name = $_POST['name'];
 $filePath = realpath('../../' . $directory . '/') . DIRECTORY_SEPARATOR;

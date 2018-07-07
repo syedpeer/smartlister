@@ -1456,7 +1456,7 @@ $(document).ready(function () {
         var name = $(item).find('.name').html(),
             type = 'file',
             dir = directory,
-            newDirectory = $('.directory .folders .item.drag-active').find('.name').html();
+            newDirectoryName = $('.directory .folders .item.drag-active').find('.name').html();
 
         //  check for folder instead of file
         if ($(item).parent().hasClass('folders')) {
@@ -1464,7 +1464,7 @@ $(document).ready(function () {
         }
 
         //  check if a new directory has been set
-        if (newDirectory == undefined || newDirectory == null) return false;
+        if (newDirectoryName == undefined || newDirectoryName == null) return false;
 
 
         $.ajax({
@@ -1474,53 +1474,50 @@ $(document).ready(function () {
                 type: type,
                 name: name,
                 directory: dir,
-                newDirectory: newDirectory
+                newDirectoryName: newDirectoryName
             },
             cache: false
         }).done(function (data) {
             try {
                 data = JSON.parse(data);
-                console.log(data);
                 if (data['status'] == 'ok') {
 
-                  //  update to content
-                  if (type == 'folder') {
-                      for (var item in content[md5(dir)]['folders']) {
-                          if (content[md5(dir)]['folders'][item]['name'] == name) {
-                              content[md5(dir)]['folders'].splice(item, 1);
-                          }
-                      }
-                  } else {
-                      for (var item in content[md5(dir)]['files']) {
-                          if (content[md5(dir)]['files'][item]['name'] == name) {
-                              content[md5(dir)]['files'].splice(item, 1);
-                          }
-                      }
-                  }
+                    var newDirectory = dir + '/' + newDirectoryName,
+                        ucType = type.charAt(0).toUpperCase() + type.slice(1),
+                        plType = type + 's';
 
-                  //  re-sort items
-                  addDirectory(directory);
+                    console.log(newDirectory);
 
-                  //  report a success to the user
-                  if (type == 'folder') {
-                      toast('Folder moved', 'tick', 2800);
-                      console.log('[Folder] Folder moved: ' + name);
-                  } else {
-                      toast('File moved', 'tick', 2800);
-                      console.log('[File] File moved: ' + name);
-                  }
+                    //  update to content
+                    for (var item in content[md5(dir)][plType]) {
+                        if (content[md5(dir)][plType][item]['name'] == name) {
+                            var itemObj = content[md5(dir)][plType][item];
+                            content[md5(dir)][plType].splice(item, 1);
+                            if (typeof content[md5(newDirectory)] !== 'undefined' &&
+                                typeof content[md5(newDirectory)] !== 'null') {
+                                content[md5(newDirectory)][plType].push(itemObj);
+                            }
+                        }
+                    }
 
-              } else {
-                  throw 'Server error';
-              }
-          } catch (err) {
-              toast('Item not moved', 'cross', 4000);
-              console.error('[Item] Unable to move item (' + err + ')');
-          }
-      }).fail(function () {
-          toast('Item not moved', 'cross', 4000);
-          console.error('[Item] Unable to request for an item move (most likely due to loss of internet)');
-      });
+                    //  re-sort items
+                    addDirectory(directory);
+
+                    //  report a success to the user
+                    toast(ucType + ' moved', 'tick', 2800);
+                    console.log('['+ ucType +'] '+ ucType +' moved: ' + name);
+
+                } else {
+                    throw 'Server error';
+                }
+            } catch (err) {
+                toast('Item not moved', 'cross', 4000);
+                console.error('[Item] Unable to move item (' + err + ')');
+            }
+        }).fail(function () {
+            toast('Item not moved', 'cross', 4000);
+            console.error('[Item] Unable to request for an item move (most likely due to loss of internet)');
+        });
 
 
     }

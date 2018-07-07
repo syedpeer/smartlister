@@ -98,7 +98,6 @@ $directory = $_GET['directory'];
 
       //  set current directory
       window.directory = '<?php echo addslashes(rawurldecode($directory)); ?>';
-      console.log(directory);
 
       //  set users settings
       window.settings = {
@@ -235,10 +234,8 @@ $directory = $_GET['directory'];
 
             <!--  file drag to move box  -->
             <div class='drag-to-move flex no-user-select'>
-                <svg viewBox="0 0 24 24">
-                    <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z"></path>
-                </svg>
-                <h2 class="name">settings.ini</h2>
+                <svg viewBox="0 0 24 24">  </svg>
+                <h2 class="name">  </h2>
             </div>
 
 
