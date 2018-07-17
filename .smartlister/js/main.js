@@ -483,6 +483,9 @@ $(document).ready(function () {
         $('.files-container #' + dirHash).removeClass('hidden');
         changeBreadcrums(dirHash);
 
+        //  reset rename btn
+        $('.info-items .item.rename').addClass('faded');
+
 
         //  encode directory for url
         //  split directory by slashes
@@ -495,8 +498,15 @@ $(document).ready(function () {
         }
         urlDirectory = urlDirectory.substring(0, urlDirectory.length-1);
 
+        //  change page title to current directory
+        //  capitalize root directory
+        var newTitle = breadcrums[breadcrums.length-1] + ' | Smartlister';
+        if (newTitle == 'root | Smartlister') newTitle = 'Root | Smartlister';
+        $('head title').html(newTitle);
+
         //  change url (data | title | url)
-        window.history.pushState(null, 'Smartlister', 'index.php?directory=' + urlDirectory);
+        window.history.pushState(newTitle, newTitle, 'index.php?directory=' + urlDirectory);
+
     }
 
 
@@ -565,7 +575,7 @@ $(document).ready(function () {
     //  reset object specific click events
     $(document).mouseup(function (e) {
         //  do not run if clicked specific objects
-        if (!$(e.target).closest('.files-container .item:not(.uploading, .new), .contextmenu').length > 0) {
+        if (!$(e.target).closest('.files-container .item:not(.uploading, .new), .contextmenu, .info-items .item.rename').length > 0) {
             $('.files-container .item').removeClass('active');
         }
     });
@@ -576,6 +586,7 @@ $(document).ready(function () {
             return false;
         }
         $('.files-container .item').removeClass('active');
+        $('.info-items .item.rename').removeClass('faded');
         $(this).addClass('active');
     });
 
@@ -715,8 +726,9 @@ $(document).ready(function () {
         if (!$(e.target).closest('.info-items .item:not(.storage)').length > 0) {
             $('.info-items .item').removeClass('active');
         }
-        if (!$(e.target).closest('.files-container .item:not(.uploading, .new), .contextmenu').length > 0) {
+        if (!$(e.target).closest('.files-container .item:not(.uploading, .new), .contextmenu, .info-items .item.rename').length > 0) {
             $('.files-container .item').removeClass('active');
+            $('.info-items .item.rename').addClass('faded');
         }
         if ($(e.target).closest('.info-items .newFolder').length == 0 && $(e.target).closest('.folders .item.new').length == 0) {
             removeNewFolder();
@@ -787,7 +799,7 @@ $(document).ready(function () {
     }).on('dragleave dragend drop', function () {
         $('.overlay-upload').removeClass('active dragdrop');
     }).on('drop', function (e) {
-        droppedFiles = e.originalEvent.dataTransfer.files;
+        var droppedFiles = e.originalEvent.dataTransfer.files;
         document.getElementById('upload').files = droppedFiles;
     });
 
@@ -1144,6 +1156,11 @@ $(document).ready(function () {
 
 
 
+    //  info-item rename trigger
+    $(document).on('click', '.info-items .item.rename', function() {
+        renameToggle(true);
+    });
+
     //  toggle item input
     var renameOldName = '';
     function renameToggle(toggle) {
@@ -1172,7 +1189,28 @@ $(document).ready(function () {
 
             //  add input to item
             $(item).addClass('renaming').find('.name').after(input).remove();
-            $(item).find('input').val(renameOldName).focus().select();
+            $(item).find('input').val(renameOldName).focus();
+
+            //  select file name (but not extension)
+            var inputObj = $(item).find('input');
+            var endPos = renameOldName.lastIndexOf('.');
+            if (type !== 'file') {
+                if (typeof inputObj[0].selectionStart != "undefined") {
+                    inputObj[0].selectionStart = 0;
+                    inputObj[0].selectionEnd = endPos;
+                } else if (document.selection && document.selection.createRange) {
+                    // IE branch
+                    inputObj[0].select();
+                    var range = document.selection.createRange();
+                    range.collapse(true);
+                    range.moveEnd("character", endPos);
+                    range.moveStart("character", 0);
+                    range.select();
+                }
+            } else {
+                $(item).find('input').select();
+            }
+
 
         } else {
 
@@ -1351,43 +1389,67 @@ $(document).ready(function () {
 
 
 
-    //  detect file drag
-    $(function() {
-        var pressed,
-            objPressed;
+    //  if moving items is enabled
+    if (settings['moveItems']) {
 
-        //  detect mouse down + move + up / item hover
-        $(document)
-        .on('mousedown', '.directory .item:not(.new, .uploading, .renaming)', function(e) {
-            pressed = true;
-            objPressed = $(this);
-        })
-        .on('mousemove', 'body', function(e) {
-            if (!pressed) return;
-            var posX = e.clientX;
-            var posY = e.clientY;
-            itemDragStart(objPressed, posX, posY);
-        })
-        .on('mouseup', function() {
-            moveItem(objPressed);
-            itemDragEnd();
-            pressed = false;
-            objPressed = 0;
-        })
-        .on({
-            mouseenter: function () {
-                if (objPressed == $(this) || !pressed) return false;
+        //  detect file drag
+        $(function() {
+            var pressed,
+                posX,
+                posY,
+                objPressed;
 
-                //  add visual indication of a folder being hovered
-                $(this).addClass('drag-active');
-            },
-            mouseleave: function () {
-                //  reset visual indication of a folder being hovered
-                $(this).removeClass('drag-active');
-            }
-        }, '.directory .folders .item:not(.new, .uploading, .renaming), .breadcrums .item');
+            //  detect mouse down + move + up / item hover
+            $(document)
+            .on('mousedown', '.directory .item:not(.new, .uploading, .renaming)', function(e) {
+                pressed = true;
+                posX = e.clientX;
+                posY = e.clientY;
+                objPressed = $(this);
+            })
+            .on('mousemove', 'body', function(e) {
+                if (!pressed) return;
+                var newPosX = e.clientX;
+                var newPosY = e.clientY;
+                if (!itemDragDelay(posX, posY, newPosX, newPosY)) return;
+                itemDragStart(objPressed, newPosX, newPosY);
+            })
+            .on('mouseup', function() {
+                moveItem(objPressed);
+                itemDragEnd();
+                pressed = false;
+                objPressed = 0;
+            })
+            .on({
+                mouseenter: function () {
+                    if (objPressed == $(this) || !pressed) return false;
 
-    });
+                    //  add visual indication of a folder being hovered
+                    $(this).addClass('drag-active');
+                },
+                mouseleave: function () {
+                    //  reset visual indication of a folder being hovered
+                    $(this).removeClass('drag-active');
+                }
+            }, '.directory .folders .item:not(.new, .uploading, .renaming), .breadcrums .item');
+
+        });
+
+    }
+
+
+    //  delay item drag (prevent false drag)
+    function itemDragDelay(posX, posY, newPosX, newPosY) {
+
+        //  if x or y has moved more than 10px
+        if (Math.abs(posX - newPosX) >= 12 || Math.abs(posY - newPosY) >= 12) {
+            return true;
+        }
+
+        //  if drag is not applicable
+        return false;
+
+    }
 
 
     //  initialise file drag
@@ -1500,24 +1562,34 @@ $(document).ready(function () {
                 data = JSON.parse(data);
                 if (data['status'] == 'ok') {
 
+                    //  convert breadcrum array to string
                     var newDirectory = '';
                     for (var folder in newBreadcrums) {
                         newDirectory += newBreadcrums[folder] + '/';
                     }
                     newDirectory = newDirectory.slice(0, -1);
 
+                    //  set uppercase type and plural type
                     var ucType = type.charAt(0).toUpperCase() + type.slice(1),
                         plType = type + 's';
 
                     //  update to content
                     for (var item in content[md5(dir)][plType]) {
                         if (content[md5(dir)][plType][item]['name'] == name) {
+
+                            //  save old item then delete it from obj
                             var itemObj = content[md5(dir)][plType][item];
                             content[md5(dir)][plType].splice(item, 1);
+
+                            //  update item link
+                            itemObj['link'] = newDirectory.substring(4) + '/' + itemObj['name'];
+
+                            //  add item to new directory (if it exists)
                             if (typeof content[md5(newDirectory)] !== 'undefined' &&
                                 typeof content[md5(newDirectory)] !== 'null') {
                                 content[md5(newDirectory)][plType].push(itemObj);
                             }
+
                         }
                     }
 

@@ -36,7 +36,7 @@
 
 //  get settings
 require '.smartlister/php/settings.php';
-require '.smartlister/php/useful.php';
+require $settings['listerFolderName'] . '/php/useful.php';
 
 
 //  redirect folderless urls
@@ -63,7 +63,7 @@ $directory = $_GET['directory'];
 
 
   <!--  set meta tags  -->
-  <meta name='theme-color' content='#3895FF'>
+  <meta name='theme-color' content='<?php echo $settings['themeColor'] ?>'>
   <meta name='author' content='https://plus.google.com/116753589877462757583' />
   <meta name='viewport' content='width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no'>
 
@@ -105,6 +105,7 @@ $directory = $_GET['directory'];
           'fileUpload': Boolean(<?php echo $settings['fileUpload'] ?>),
           'folderCreation': Boolean(<?php echo $settings['folderCreation'] ?>),
           'renameItems': Boolean(<?php echo $settings['renameItems'] ?>),
+          'moveItems': Boolean(<?php echo $settings['moveItems'] ?>),
           'themeColor': '<?php echo $settings['themeColor'] ?>'
       };
 
@@ -130,6 +131,11 @@ $directory = $_GET['directory'];
 
      .info-items .item:not(.storage):hover {
        background-color: rgba(<?php echo hexToRgba($settings['themeColor']) ?>, .15);
+     }
+
+     .overlay-upload .icon-cloud,
+     .overlay-upload .box {
+       background-color: rgba(<?php echo hexToRgba($settings['themeColor']) ?>, 1);
      }
 
   </style>
@@ -183,6 +189,16 @@ $directory = $_GET['directory'];
                     <div class='info flex'>
                         <h1>
                           New Folder
+                        </h1>
+                    </div>
+                </div>
+                <div class='item faded rename flex' state='<?php echo ($settings['renameItems']) ? 'true' : 'false' ?>'>
+                    <svg viewBox='0 0 24 24'>
+                        <path fill='#555' d='M18,17H10.5L12.5,15H18M6,17V14.5L13.88,6.65C14.07,6.45 14.39,6.45 14.59,6.65L16.35,8.41C16.55,8.61 16.55,8.92 16.35,9.12L8.47,17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z'></path>
+                    </svg>
+                    <div class='info flex'>
+                        <h1>
+                          Rename
                         </h1>
                     </div>
                 </div>
